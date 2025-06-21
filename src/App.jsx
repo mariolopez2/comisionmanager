@@ -64,7 +64,7 @@ export default function App() {
     }
   };
 
-  // TabBar Spotify style
+  // TabBar
   const TabBar = () => (
     <nav className="fixed bottom-0 left-0 right-0 z-30 bg-zinc-900 border-t border-zinc-800 flex justify-around items-center py-2 md:static md:bg-transparent md:border-0 md:mb-6 md:rounded-b-2xl md:shadow-xl">
       {tabs.map((t) => (
