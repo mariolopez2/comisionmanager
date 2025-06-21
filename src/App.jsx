@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-// -- App Principal "Spotify Edition" --
+// -- App Principal  --
 export default function App() {
   useEffect(() => {
     document.body.style.fontFamily = "'Inter', system-ui, Arial, sans-serif";
@@ -17,24 +17,13 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [tab, setTab] = useState("cut");
   const [routes, setRoutes] = useState([]);
-  const [operators, setOperators] = useState([
-    {
-      id: "default-admin",
-      firstName: "Admin",
-      lastName: "Root",
-      address: "",
-      email: "admin@example.com",
-      username: "admin",
-      password: "admin",
-      role: "admin",
-    },
-  ]);
+  const [operators, setOperators] = useState([]);
   const [machines, setMachines] = useState([]);
   const [clients, setClients] = useState([]);
   const [cuts, setCuts] = useState([]);
   const [settings, setSettings] = useState({
     emailFrom: "",
-    reportTitle: "Comisión Tracker",
+    reportTitle: "Comisión Manager",
   });
 
   // Tabs config
@@ -51,23 +40,28 @@ export default function App() {
     { key: "cut", label: "Registrar Corte", icon: "🔄" },
     { key: "reports", label: "Reportes", icon: "📄" },
   ];
-  const tabs = currentUser?.role === "admin" ? TABS_ADMIN : TABS_OPERATOR;
+  const tabs = currentUser?.rol === "admin" ? TABS_ADMIN : TABS_OPERATOR;
 
   // Login
-  const login = (u, p) => {
-    const found = operators.find(
-      (op) => op.username === u && op.password === p
-    );
-    if (found) {
-      setCurrentUser(found);
-      setTab("cut");
-    } else {
-      alert("Credenciales incorrectas");
+  const login = async (username, password) => {
+    try {
+      const res = await fetch("https://comisionmanager-api.onrender.com/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        // Login exitoso
+        setCurrentUser(data.user);
+        setTab(data.user.rol === "admin" ? "cut" : "cut");
+      } else {
+        alert(data.message || "Credenciales incorrectas");
+      }
+    } catch (err) {
+      alert("Error de red");
+      console.error(err);
     }
-  };
-  const logout = () => {
-    setCurrentUser(null);
-    setTab("cut");
   };
 
   // TabBar Spotify style
@@ -96,7 +90,7 @@ export default function App() {
     </nav>
   );
 
-  // LoginForm super pro
+  // LoginForm
   const LoginForm = () => {
     const [u, setU] = useState("");
     const [p, setP] = useState("");
@@ -104,15 +98,15 @@ export default function App() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-900 to-zinc-800">
         <div className="bg-zinc-900 p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-zinc-700">
           <div className="flex justify-center mb-4">
-            <span className="text-5xl">🎧</span>
+            <span className="text-5xl">📊</span>
           </div>
-          <h1 className="text-3xl font-extrabold mb-4 text-center tracking-tight">Comisión Tracker</h1>
+          <h1 className="text-3xl font-extrabold mb-4 text-center tracking-tight">Comisión Manager</h1>
           <input className="bg-zinc-800 border-zinc-700 border p-3 rounded-xl w-full mb-3 text-white placeholder:text-zinc-500" placeholder="Usuario" value={u} onChange={e => setU(e.target.value)} />
           <input className="bg-zinc-800 border-zinc-700 border p-3 rounded-xl w-full mb-6 text-white placeholder:text-zinc-500" type="password" placeholder="Contraseña" value={p} onChange={e => setP(e.target.value)} />
           <button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold transition shadow" onClick={() => login(u, p)}>
             Iniciar sesión
           </button>
-          <p className="text-center text-xs text-zinc-400 mt-4 tracking-tight">admin / admin</p>
+          <p className="text-center text-xs text-zinc-400 mt-4 tracking-tight">Version Alfa 1.0</p>
         </div>
       </div>
     );
@@ -256,7 +250,7 @@ const CutTab = () => {
     alert("¡Corte guardado y ticket generado!");
   };
 
-  if (currentUser.role === "operator" && rutasOperador.length === 0) {
+  if (currentUser.rol === "operator" && rutasOperador.length === 0) {
     return <div className="text-center text-gray-600">No tienes rutas asignadas.</div>;
   }
 
@@ -378,7 +372,7 @@ const CutTab = () => {
 
   // SOLO admin puede ver y usar esta pestaña:
   const OperatorsTab = () => {
-    if (currentUser?.role !== "admin") return null;
+    if (currentUser?.rol !== "admin") return null;
 
     const [form, setForm] = useState({
       firstName: "",
@@ -387,7 +381,7 @@ const CutTab = () => {
       email: "",
       username: "",
       password: "",
-      role: "operator",
+      rol: "operator",
     });
     const [editing, setEditing] = useState(null);
 
@@ -399,7 +393,7 @@ const CutTab = () => {
       } else {
         setOperators([...operators, { id: crypto.randomUUID(), ...form }]);
       }
-      setForm({ firstName: "", lastName: "", address: "", email: "", username: "", password: "", role: "operator" });
+      setForm({ firstName: "", lastName: "", address: "", email: "", username: "", password: "", rol: "operator" });
     };
 
     const handleEdit = (op) => {
@@ -418,7 +412,7 @@ const CutTab = () => {
             <input className="border p-2 rounded" placeholder="Correo electrónico" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
             <input className="border p-2 rounded" placeholder="Usuario" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} />
             <input className="border p-2 rounded" placeholder="Contraseña" type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
-            <select className="border p-2 rounded" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
+            <select className="border p-2 rounded" value={form.rol} onChange={e => setForm({ ...form, rol: e.target.value })}>
               <option value="operator">Operador</option>
               <option value="admin">Administrador</option>
             </select>
@@ -426,7 +420,7 @@ const CutTab = () => {
           <div className="flex gap-2 mt-4">
             <button className="bg-green-600 text-white px-4 py-2 rounded" onClick={handleSave}>{editing ? "Actualizar" : "Guardar"}</button>
             {editing && (
-              <button className="text-sm underline" onClick={() => { setEditing(null); setForm({ firstName: "", lastName: "", address: "", email: "", username: "", password: "", role: "operator" }); }}>Cancelar</button>
+              <button className="text-sm underline" onClick={() => { setEditing(null); setForm({ firstName: "", lastName: "", address: "", email: "", username: "", password: "", rol: "operator" }); }}>Cancelar</button>
             )}
           </div>
         </div>
@@ -436,7 +430,7 @@ const CutTab = () => {
           <ul className="space-y-1 text-sm">
             {operators.map(op => (
               <li key={op.id} className="border p-2 rounded flex justify-between items-center">
-                <span>{op.firstName} {op.lastName} — <span className="text-gray-500">{op.username}</span> ({op.role})</span>
+                <span>{op.firstName} {op.lastName} — <span className="text-gray-500">{op.username}</span> ({op.rol})</span>
                 <button className="text-blue-600 text-sm" onClick={() => handleEdit(op)}>Editar</button>
               </li>
             ))}
@@ -448,7 +442,7 @@ const CutTab = () => {
 
 
   const MachinesTab = () => {
-  if (currentUser?.role !== "admin") return null;
+  if (currentUser?.rol !== "admin") return null;
 
   const [form, setForm] = useState({
     numero: "",      // Nuevo campo de identificación visible
@@ -637,7 +631,7 @@ const CutTab = () => {
   
 
   const ClientsTab = () => {
-  if (currentUser?.role !== "admin") return null;
+  if (currentUser?.rol !== "admin") return null;
 
   const [form, setForm] = useState({
     firstName: "",
@@ -791,7 +785,7 @@ const CutTab = () => {
 
 
   const RoutesTab = () => {
-    if (currentUser?.role !== "admin") return null;
+    if (currentUser?.rol !== "admin") return null;
     const [form, setForm] = useState({ name: "", operator: "" });
     const [editingId, setEditingId] = useState(null);
 
@@ -849,7 +843,7 @@ const CutTab = () => {
   const ReportsTab = () => {
   // Filtra cortes visibles según rol:
   let cortesVisibles = cuts;
-  if (currentUser.role === "operator") {
+  if (currentUser.rol === "operator") {
     // Solo cortes hechos por él o de sus rutas/clientes
     const rutasOperador = routes.filter(r => r.operator === `${currentUser.firstName} ${currentUser.lastName}`).map(r => r.name);
     const clientesOp = clients.filter(c => rutasOperador.includes(c.route)).map(c => c.id);
@@ -942,7 +936,7 @@ const CutTab = () => {
 
   const ConfigTab = () => {
   // Solo admin puede ver
-  if (currentUser?.role !== "admin") return null;
+  if (currentUser?.rol !== "admin") return null;
   const [form, setForm] = useState({
     oldpass: "",
     newpass: "",
