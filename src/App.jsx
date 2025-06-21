@@ -25,6 +25,7 @@ export default function App() {
     emailFrom: "",
     reportTitle: "Comisión Manager",
   });
+  const logout = () => setCurrentUser(null);
 
   // Tabs config
   const TABS_ADMIN = [
@@ -644,7 +645,6 @@ const CutTab = () => {
     active: true,
   });
   const [editingId, setEditingId] = useState(null);
-  const [clients, setClients] = useState([]);
 
   // Solo rutas activas
   const rutasDisponibles = routes.map(r => r.name);
