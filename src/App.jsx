@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-
+import Login from "./Login.jsx";
 // -- App Principal  --
 export default function App() {
   useEffect(() => {
@@ -95,23 +95,14 @@ export default function App() {
   const LoginForm = () => {
     const [u, setU] = useState("");
     const [p, setP] = useState("");
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-900 to-zinc-800">
-        <div className="bg-zinc-900 p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-zinc-700">
-          <div className="flex justify-center mb-4">
-            <span className="text-5xl">📊</span>
-          </div>
-          <h1 className="text-3xl font-extrabold mb-4 text-center tracking-tight">Comisión Manager</h1>
-          <input className="bg-zinc-800 border-zinc-700 border p-3 rounded-xl w-full mb-3 text-white placeholder:text-zinc-500" placeholder="Usuario" value={u} onChange={e => setU(e.target.value)} />
-          <input className="bg-zinc-800 border-zinc-700 border p-3 rounded-xl w-full mb-6 text-white placeholder:text-zinc-500" type="password" placeholder="Contraseña" value={p} onChange={e => setP(e.target.value)} />
-          <button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold transition shadow" onClick={() => login(u, p)}>
-            Iniciar sesión
-          </button>
-          <p className="text-center text-xs text-zinc-400 mt-4 tracking-tight">Version Alfa 1.0</p>
-        </div>
-      </div>
+    return currentUser ? (
+      <>
+        {/* tu dashboard aquí */}
+      </>
+    ) : (
+      <Login onLogin={login} />
     );
-  };
+  }
   
 
 const CutTab = () => {
