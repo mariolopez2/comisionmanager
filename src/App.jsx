@@ -92,21 +92,18 @@ export default function App() {
   );
 
   // LoginForm
-  const LoginForm = () => {
-    const [u, setU] = useState("");
-    const [p, setP] = useState("");
-    return currentUser ? (
-      <>
-        {/* tu dashboard aquí */}
-      </>
-    ) : (
-      <Login onLogin={login} />
-    );
-  }
+const LoginForm = () => {
+  return currentUser ? (
+    <>
+      {/* tu dashboard aquí */}
+    </>
+  ) : (
+    <Login onLogin={login} />
+  );
+}
   
 
 const CutTab = () => {
-  if (!currentUser) return null;
   // Obtener rutas que le pertenecen al operador
   const rutasOperador = routes.filter(r => r.operator === `${currentUser.firstName} ${currentUser.lastName}`);
   const [selectedRoute, setSelectedRoute] = useState("");
@@ -153,22 +150,22 @@ const CutTab = () => {
   // Firma canvas
   const CanvasFirma = ({ onDone }) => {
     const ref = React.useRef();
-    let drawing = false;
+    const drawingRef = React.useRef(false);
     useEffect(() => {
       const canvas = ref.current;
       const ctx = canvas.getContext('2d');
       ctx.lineWidth = 2;
       let last = null;
-      function start(e) { drawing = true; last = [e.offsetX, e.offsetY]; }
+      function start(e) { drawingRef.current = true; last = [e.offsetX, e.offsetY]; }
       function move(e) {
-        if (!drawing) return;
+        if (!drawingRef.current) return;
         ctx.beginPath();
         ctx.moveTo(...last);
         ctx.lineTo(e.offsetX, e.offsetY);
         ctx.stroke();
         last = [e.offsetX, e.offsetY];
       }
-      function end() { drawing = false; }
+      function end() { drawingRef.current = false; }
       canvas.addEventListener('mousedown', start);
       canvas.addEventListener('mousemove', move);
       canvas.addEventListener('mouseup', end);
@@ -363,8 +360,7 @@ const CutTab = () => {
 };
 
   // SOLO admin puede ver y usar esta pestaña:
-  const OperatorsTab = () => {
-    if (currentUser?.rol !== "admin") return null;
+const OperatorsTab = () => {
 
     const [form, setForm] = useState({
       firstName: "",
@@ -433,8 +429,7 @@ const CutTab = () => {
   };
 
 
-  const MachinesTab = () => {
-  if (currentUser?.rol !== "admin") return null;
+const MachinesTab = () => {
 
   const [form, setForm] = useState({
     numero: "",      // Nuevo campo de identificación visible
@@ -454,8 +449,7 @@ const CutTab = () => {
   const rutasDisponibles = routes.map(r => r.name);
   const clientesActivos = clients.filter(c => c.active);
 
-  // Máquina solo puede ser asignada si está libre y activa
-  const maquinasLibres = machines.filter(m => m.status === "libre" && m.active);
+
 
   const handleSave = () => {
     if (!form.type || !form.numero) return;
@@ -622,8 +616,7 @@ const CutTab = () => {
 };
   
 
-  const ClientsTab = () => {
-  if (currentUser?.rol !== "admin") return null;
+const ClientsTab = () => {
 
   const [form, setForm] = useState({
     firstName: "",
@@ -775,8 +768,7 @@ const CutTab = () => {
 
 
 
-  const RoutesTab = () => {
-    if (currentUser?.rol !== "admin") return null;
+const RoutesTab = () => {
     const [form, setForm] = useState({ name: "", operator: "" });
     const [editingId, setEditingId] = useState(null);
 
@@ -927,7 +919,6 @@ const CutTab = () => {
 
   const ConfigTab = () => {
   // Solo admin puede ver
-  if (currentUser?.rol !== "admin") return null;
   const [form, setForm] = useState({
     oldpass: "",
     newpass: "",
@@ -974,14 +965,22 @@ const CutTab = () => {
 
   const renderTab = () => {
     switch (tab) {
-      case "cut": return <CutTab />;
-      case "operators": return <OperatorsTab />;
-      case "machines": return <MachinesTab />;
-      case "routes": return <RoutesTab />;
-      case "clients": return <ClientsTab />;
-      case "reports": return <ReportsTab />;
-      case "config": return <ConfigTab />;
-      default: return null;
+      case "cut":
+        return <CutTab />;
+      case "reports":
+        return <ReportsTab />;
+      case "operators":
+        return currentUser?.rol === "admin" ? <OperatorsTab /> : null;
+      case "machines":
+        return currentUser?.rol === "admin" ? <MachinesTab /> : null;
+      case "routes":
+        return currentUser?.rol === "admin" ? <RoutesTab /> : null;
+      case "clients":
+        return currentUser?.rol === "admin" ? <ClientsTab /> : null;
+      case "config":
+        return currentUser?.rol === "admin" ? <ConfigTab /> : null;
+      default:
+        return null;
     }
   };
 
