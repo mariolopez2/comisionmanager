@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { apiPost, apiPut } from "../api.js";
 
 export default function MachinesTab({ currentUser, routes, machines, setMachines, clients }) {
   if (currentUser?.rol !== "admin") return null;
@@ -24,33 +25,32 @@ export default function MachinesTab({ currentUser, routes, machines, setMachines
   // Máquina solo puede ser asignada si está libre y activa
   const maquinasLibres = machines.filter(m => m.status === "libre" && m.active);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.type || !form.numero) return;
-    if (editingId) {
-      setMachines(machines.map(m =>
-        m.id === editingId ? { ...m, ...form } : m
-      ));
-    } else {
-      setMachines([
-        ...machines,
-        {
-          id: crypto.randomUUID(), // ID único invisible
-          ...form,
-        }
-      ]);
+    try {
+      if (editingId) {
+        const updated = await apiPut(`/machines/${editingId}`, form);
+        setMachines(machines.map(m => (m.id === editingId ? updated : m)));
+      } else {
+        const created = await apiPost('/machines', form);
+        setMachines([...machines, created]);
+      }
+      setForm({
+        numero: "",
+        type: "",
+        fondo: 500,
+        route: "",
+        client: "",
+        status: "libre",
+        active: true,
+      });
+      setEditingId(null);
+      setAssignMode(false);
+      setAssignClient("");
+    } catch (err) {
+      alert('Error guardando máquina');
+      console.error(err);
     }
-    setForm({
-      numero: "",
-      type: "",
-      fondo: 500,
-      route: "",
-      client: "",
-      status: "libre",
-      active: true,
-    });
-    setEditingId(null);
-    setAssignMode(false);
-    setAssignClient("");
   };
 
   const startEdit = m => {
@@ -59,17 +59,29 @@ export default function MachinesTab({ currentUser, routes, machines, setMachines
   };
 
   // Botón activar/desactivar
-  const toggleActive = id => {
-    setMachines(machines.map(m =>
-      m.id === id ? { ...m, active: !m.active } : m
-    ));
+  const toggleActive = async id => {
+    const machine = machines.find(m => m.id === id);
+    if (!machine) return;
+    try {
+      const updated = await apiPut(`/machines/${id}`, { ...machine, active: !machine.active });
+      setMachines(machines.map(m => m.id === id ? updated : m));
+    } catch (err) {
+      alert('Error actualizando');
+      console.error(err);
+    }
   };
 
   // Botón desasignar
-  const desasignar = id => {
-    setMachines(machines.map(m =>
-      m.id === id ? { ...m, status: "libre", route: "", client: "" } : m
-    ));
+  const desasignar = async id => {
+    const m = machines.find(ma => ma.id === id);
+    if (!m) return;
+    try {
+      const updated = await apiPut(`/machines/${id}`, { ...m, status: "libre", route: "", client: "" });
+      setMachines(machines.map(ma => ma.id === id ? updated : ma));
+    } catch (err) {
+      alert('Error desasignando');
+      console.error(err);
+    }
   };
 
   // Nuevo: Asignar a cliente activo
@@ -77,14 +89,20 @@ export default function MachinesTab({ currentUser, routes, machines, setMachines
     setEditingId(id);
     setAssignMode(true);
   };
-  const asignarMaquina = () => {
+  const asignarMaquina = async () => {
     if (!assignClient) return;
-    setMachines(machines.map(m =>
-      m.id === editingId ? { ...m, client: assignClient, status: "asignada" } : m
-    ));
-    setEditingId(null);
-    setAssignMode(false);
-    setAssignClient("");
+    const m = machines.find(ma => ma.id === editingId);
+    if (!m) return;
+    try {
+      const updated = await apiPut(`/machines/${editingId}`, { ...m, client: assignClient, status: "asignada" });
+      setMachines(machines.map(ma => ma.id === editingId ? updated : ma));
+      setEditingId(null);
+      setAssignMode(false);
+      setAssignClient("");
+    } catch (err) {
+      alert('Error asignando máquina');
+      console.error(err);
+    }
   };
 
   return (

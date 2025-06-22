@@ -7,6 +7,7 @@ import ClientsTab from "./tabs/ClientsTab.jsx";
 import RoutesTab from "./tabs/RoutesTab.jsx";
 import ReportsTab from "./tabs/ReportsTab.jsx";
 import ConfigTab from "./tabs/ConfigTab.jsx";
+import { API_BASE, apiGet } from "./api.js";
 // -- App Principal  --
 export default function App() {
   useEffect(() => {
@@ -34,17 +35,15 @@ export default function App() {
   });
   const logout = () => setCurrentUser(null);
 
-  const API_BASE = "https://comisionmanager-api.onrender.com/api";
-
   const fetchInitialData = async () => {
     try {
       const [routesData, operatorsData, machinesData, clientsData, cutsData, settingsData] = await Promise.all([
-        fetch(`${API_BASE}/routes`).then(r => r.json()),
-        fetch(`${API_BASE}/operators`).then(r => r.json()),
-        fetch(`${API_BASE}/machines`).then(r => r.json()),
-        fetch(`${API_BASE}/clients`).then(r => r.json()),
-        fetch(`${API_BASE}/cuts`).then(r => r.json()),
-        fetch(`${API_BASE}/settings`).then(r => r.json())
+        apiGet('/routes'),
+        apiGet('/operators'),
+        apiGet('/machines'),
+        apiGet('/clients'),
+        apiGet('/cuts'),
+        apiGet('/settings')
       ]);
       setRoutes(routesData || []);
       setOperators(operatorsData || []);
@@ -76,7 +75,7 @@ export default function App() {
   // Login
   const login = async (username, password) => {
     try {
-      const res = await fetch("https://comisionmanager-api.onrender.com/api/login", {
+      const res = await fetch(`${API_BASE}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password })
