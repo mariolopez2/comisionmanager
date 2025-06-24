@@ -1,19 +1,26 @@
 import React, { useState } from "react";
+import { apiPost, apiPut } from "../api.js";
 
 export default function RoutesTab({ currentUser, routes, setRoutes, operators }) {
     if (currentUser?.rol !== "admin") return null;
     const [form, setForm] = useState({ name: "", operator: "" });
     const [editingId, setEditingId] = useState(null);
-
-    const handleSave = () => {
+    const handleSave = async () => {
       if (!form.name.trim()) return;
-      if (editingId) {
-        setRoutes(routes.map(r => (r.id === editingId ? { ...r, ...form } : r)));
-      } else {
-        setRoutes([...routes, { id: crypto.randomUUID(), ...form }]);
+      try {
+        if (editingId) {
+          const updated = await apiPut(`/routes/${editingId}`, form);
+          setRoutes(routes.map(r => (r.id === editingId ? updated : r)));
+        } else {
+          const created = await apiPost('/routes', form);
+          setRoutes([...routes, created]);
+        }
+        setForm({ name: "", operator: "" });
+        setEditingId(null);
+      } catch (err) {
+        alert('Error guardando ruta');
+        console.error(err);
       }
-      setForm({ name: "", operator: "" });
-      setEditingId(null);
     };
 
     const startEdit = route => {

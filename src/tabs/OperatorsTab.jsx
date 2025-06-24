@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { apiPost, apiPut } from "../api.js";
 
 export default function OperatorsTab({ currentUser, operators, setOperators }) {
     if (currentUser?.rol !== "admin") return null;
@@ -13,16 +14,22 @@ export default function OperatorsTab({ currentUser, operators, setOperators }) {
       rol: "operator",
     });
     const [editing, setEditing] = useState(null);
-
-    const handleSave = () => {
+    const handleSave = async () => {
       if (!form.username || (!form.password && !editing)) return;
-      if (editing) {
-        setOperators(operators.map(op => op.id === editing ? { ...op, ...form } : op));
-        setEditing(null);
-      } else {
-        setOperators([...operators, { id: crypto.randomUUID(), ...form }]);
+      try {
+        if (editing) {
+          const updated = await apiPut(`/operators/${editing}`, form);
+          setOperators(operators.map(op => op.id === editing ? updated : op));
+          setEditing(null);
+        } else {
+          const created = await apiPost('/operators', form);
+          setOperators([...operators, created]);
+        }
+        setForm({ firstName: "", lastName: "", address: "", email: "", username: "", password: "", rol: "operator" });
+      } catch (err) {
+        alert('Error guardando operador');
+        console.error(err);
       }
-      setForm({ firstName: "", lastName: "", address: "", email: "", username: "", password: "", rol: "operator" });
     };
 
     const handleEdit = (op) => {

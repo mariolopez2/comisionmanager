@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { apiPost } from "../api.js";
+
 
 export default function CutTab({ currentUser, routes, clients, machines, cuts, setCuts }) {
   if (!currentUser) return null;
@@ -113,8 +115,8 @@ export default function CutTab({ currentUser, routes, clients, machines, cuts, s
   }
 
   // Guardar corte definitivo
-  const guardarCorte = () => {
-    setCuts([...cuts, {
+  const guardarCorte = async () => {
+    const payload = {
       clientId: selectedClient,
       operatorId: currentUser.id,
       date: today,
@@ -128,13 +130,20 @@ export default function CutTab({ currentUser, routes, clients, machines, cuts, s
       })),
       total,
       firma,
-    }]);
-    setConfirm(false);
-    setSigning(false);
-    setFirma(null);
-    setForm({});
-    setSelectedClient("");
-    alert("¡Corte guardado y ticket generado!");
+    };
+    try {
+      const created = await apiPost('/cuts', payload);
+      setCuts([...cuts, created]);
+      setConfirm(false);
+      setSigning(false);
+      setFirma(null);
+      setForm({});
+      setSelectedClient("");
+      alert("¡Corte guardado y ticket generado!");
+    } catch (err) {
+      alert('Error guardando corte');
+      console.error(err);
+    }
   };
 
   if (currentUser.rol === "operator" && rutasOperador.length === 0) {

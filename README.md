@@ -31,3 +31,11 @@ If you are developing a production application, we recommend using TypeScript wi
    ```bash
    npm run preview
    ```
+
+## API server
+
+Configure `db.js` with your PostgreSQL connection. Then run:
+```bash
+node server.js
+```
+This exposes the `/api` endpoints used by the app.

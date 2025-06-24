@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { apiPut } from "../api.js";
+
 
 export default function ConfigTab({ currentUser, operators, setOperators, settings, setSettings }) {
   // Solo admin puede ver
@@ -10,24 +12,31 @@ export default function ConfigTab({ currentUser, operators, setOperators, settin
     reportTitle: settings.reportTitle,
   });
   // Cambiar contraseña (de la cuenta logueada)
-  function cambiarPass() {
+  async function cambiarPass() {
     if (form.oldpass !== currentUser.password) {
       alert("Contraseña actual incorrecta");
       return;
     }
-    setOperators(ops =>
-      ops.map(op => op.id === currentUser.id
-        ? { ...op, password: form.newpass }
-        : op
-      )
-    );
-    alert("Contraseña cambiada");
-    setForm({ ...form, oldpass: "", newpass: "" });
+    try {
+      const updated = await apiPut(`/operators/${currentUser.id}`, { ...currentUser, password: form.newpass });
+      setOperators(ops => ops.map(op => op.id === currentUser.id ? updated : op));
+      alert("Contraseña cambiada");
+      setForm({ ...form, oldpass: "", newpass: "" });
+    } catch (err) {
+      alert('Error cambiando contraseña');
+      console.error(err);
+    }
   }
   // Cambiar email/titulo
-  function guardarConfig() {
-    setSettings({ emailFrom: form.emailFrom, reportTitle: form.reportTitle });
-    alert("Configuración actualizada");
+  async function guardarConfig() {
+    try {
+      const updated = await apiPut('/settings', { emailFrom: form.emailFrom, reportTitle: form.reportTitle });
+      setSettings(updated);
+      alert("Configuración actualizada");
+    } catch (err) {
+      alert('Error guardando configuración');
+      console.error(err);
+    }
   }
   return (
     <div className="space-y-8 max-w-xl">

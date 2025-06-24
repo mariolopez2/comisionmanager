@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { apiPost, apiPut } from "../api.js";
+
 
 export default function ClientsTab({ currentUser, clients, setClients, routes }) {
   if (currentUser?.rol !== "admin") return null;
@@ -18,32 +20,31 @@ export default function ClientsTab({ currentUser, clients, setClients, routes })
   // Solo rutas activas
   const rutasDisponibles = routes.map(r => r.name);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.firstName || !form.lastName || !form.route) return;
-    if (editingId) {
-      setClients(clients.map(c =>
-        c.id === editingId ? { ...c, ...form } : c
-      ));
-      setEditingId(null);
-    } else {
-      setClients([
-        ...clients,
-        {
-          id: crypto.randomUUID(),
-          ...form,
-        }
-      ]);
+    try {
+      if (editingId) {
+        const updated = await apiPut(`/clients/${editingId}`, form);
+        setClients(clients.map(c => c.id === editingId ? updated : c));
+        setEditingId(null);
+      } else {
+        const created = await apiPost('/clients', form);
+        setClients([...clients, created]);
+      }
+      setForm({
+        firstName: "",
+        lastName: "",
+        address: "",
+        phone: "",
+        email: "",
+        commission: 40,
+        route: "",
+        active: true,
+      });
+    } catch (err) {
+      alert('Error guardando cliente');
+      console.error(err);
     }
-    setForm({
-      firstName: "",
-      lastName: "",
-      address: "",
-      phone: "",
-      email: "",
-      commission: 40,
-      route: "",
-      active: true,
-    });
   };
 
   const startEdit = c => {
@@ -51,10 +52,16 @@ export default function ClientsTab({ currentUser, clients, setClients, routes })
     setForm({ ...c });
   };
 
-  const toggleActive = id => {
-    setClients(clients.map(c =>
-      c.id === id ? { ...c, active: !c.active } : c
-    ));
+  const toggleActive = async id => {
+    const client = clients.find(c => c.id === id);
+    if (!client) return;
+    try {
+      const updated = await apiPut(`/clients/${id}`, { ...client, active: !client.active });
+      setClients(clients.map(c => c.id === id ? updated : c));
+    } catch (err) {
+      alert('Error actualizando');
+      console.error(err);
+    }
   };
 
   return (
